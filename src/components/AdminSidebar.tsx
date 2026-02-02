@@ -25,6 +25,7 @@ interface AdminSidebarProps {
 
 const menuItems = [
   { icon: LayoutDashboard, path: '/admin', labelKey: 'overview' as const },
+  { icon: Milk, path: '/admin/milk-entry', label: 'Milk Entry' },
   { icon: Users, path: '/admin/customers', labelKey: 'customers' as const },
   { icon: ShoppingCart, path: '/admin/orders', labelKey: 'orders' as const },
   { icon: Milk, path: '/admin/buffaloes', labelKey: 'buffaloes' as const },
@@ -82,7 +83,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle 
                   )}
                 >
                   <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-sidebar-primary')} />
-                  {!collapsed && <span className="font-medium">{t(item.labelKey)}</span>}
+                  {!collapsed && <span className="font-medium">{item.label || t(item.labelKey)}</span>}
                 </RouterNavLink>
               </li>
             );

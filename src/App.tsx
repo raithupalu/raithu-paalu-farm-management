@@ -19,6 +19,7 @@ import UserLayout from "./layouts/UserLayout";
 
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
+import MilkEntryPage from "./pages/admin/MilkEntryPage";
 
 // User Pages
 import UserProgress from "./pages/user/UserProgress";
@@ -81,6 +82,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       }>
         <Route index element={<AdminOverview />} />
+        <Route path="milk-entry" element={<MilkEntryPage />} />
         <Route path="customers" element={<AdminOverview />} />
         <Route path="orders" element={<AdminOverview />} />
         <Route path="buffaloes" element={<AdminOverview />} />

@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminSidebarProps {
   collapsed: boolean;
@@ -40,8 +40,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle 
   const { t } = useLanguage();
   const { logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     window.location.href = '/';
   };
 

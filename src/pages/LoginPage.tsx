@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Milk, Eye, EyeOff, ArrowRight, Shield } from 'lucide-react';
+import { Milk, Eye, EyeOff, ArrowRight, Shield, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -15,18 +15,25 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
+    if (!email || !password) {
       toast({
         variant: "destructive",
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
@@ -39,27 +46,19 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await login(username, password);
+      const { error } = await login(email, password);
       
-      if (success) {
-        toast({
-          title: t('loginSuccess'),
-          description: `${t('welcomeBack')}, ${username}!`,
-        });
-        
-        // Navigate based on role (admin credentials: admin/admin123)
-        if (username === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
-      } else {
+      if (error) {
         toast({
           variant: "destructive",
           title: language === 'te' ? 'లాగిన్ విఫలమైంది' : 
                  language === 'hi' ? 'लॉगिन विफल' : 'Login Failed',
-          description: language === 'te' ? 'తప్పు క్రెడెన్షియల్స్' : 
-                       language === 'hi' ? 'गलत क्रेडेंशियल्स' : 'Invalid credentials',
+          description: error,
+        });
+      } else {
+        toast({
+          title: t('loginSuccess'),
+          description: language === 'te' ? 'స్వాగతం!' : language === 'hi' ? 'स्वागत है!' : 'Welcome back!',
         });
       }
     } catch (error) {
@@ -106,15 +105,18 @@ const LoginPage: React.FC = () => {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username">{t('username')}</Label>
+              <Label htmlFor="email">
+                <Mail className="inline h-4 w-4 mr-1" />
+                {language === 'te' ? 'ఇమెయిల్' : language === 'hi' ? 'ईमेल' : 'Email'}
+              </Label>
               <Input
-                id="username"
-                type="text"
-                placeholder={language === 'te' ? 'మీ యూజర్‌నేమ్ నమోదు చేయండి' : 
-                             language === 'hi' ? 'अपना यूज़रनेम दर्ज करें' : 
-                             'Enter your username'}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder={language === 'te' ? 'మీ ఇమెయిల్ నమోదు చేయండి' : 
+                             language === 'hi' ? 'अपना ईमेल दर्ज करें' : 
+                             'Enter your email'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-12"
               />
             </div>
@@ -166,14 +168,14 @@ const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Admin hint */}
+          {/* Demo hint */}
           <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Shield className="h-4 w-4" />
               <span>
-                {language === 'te' ? 'అడ్మిన్ లాగిన్: admin / admin123' : 
-                 language === 'hi' ? 'एडमिन लॉगिन: admin / admin123' : 
-                 'Admin login: admin / admin123'}
+                {language === 'te' ? 'కొత్త ఖాతా సృష్టించడానికి రిజిస్టర్ చేయండి' : 
+                 language === 'hi' ? 'नया खाता बनाने के लिए रजिस्टर करें' : 
+                 'Register to create a new account'}
               </span>
             </div>
           </div>

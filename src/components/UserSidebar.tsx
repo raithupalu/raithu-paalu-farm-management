@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserSidebarProps {
   collapsed: boolean;
@@ -36,8 +36,8 @@ export const UserSidebar: React.FC<UserSidebarProps> = ({ collapsed, onToggle })
   const { t } = useLanguage();
   const { logout, user } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     window.location.href = '/';
   };
 

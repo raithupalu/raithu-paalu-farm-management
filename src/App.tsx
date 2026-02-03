@@ -20,6 +20,13 @@ import UserLayout from "./layouts/UserLayout";
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
 import MilkEntryPage from "./pages/admin/MilkEntryPage";
+import CustomersPage from "./pages/admin/CustomersPage";
+import OrdersPage from "./pages/admin/OrdersPage";
+import BuffaloesPage from "./pages/admin/BuffaloesPage";
+import ExpensesPage from "./pages/admin/ExpensesPage";
+import InventoryPage from "./pages/admin/InventoryPage";
+import ReportsPage from "./pages/admin/ReportsPage";
+import LogsPage from "./pages/admin/LogsPage";
 
 // User Pages
 import UserProgress from "./pages/user/UserProgress";
@@ -99,13 +106,13 @@ const AppRoutes = () => {
       }>
         <Route index element={<AdminOverview />} />
         <Route path="milk-entry" element={<MilkEntryPage />} />
-        <Route path="customers" element={<AdminOverview />} />
-        <Route path="orders" element={<AdminOverview />} />
-        <Route path="buffaloes" element={<AdminOverview />} />
-        <Route path="expenses" element={<AdminOverview />} />
-        <Route path="inventory" element={<AdminOverview />} />
-        <Route path="reports" element={<AdminOverview />} />
-        <Route path="logs" element={<AdminOverview />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="buffaloes" element={<BuffaloesPage />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="inventory" element={<InventoryPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="logs" element={<LogsPage />} />
       </Route>
 
       {/* User Routes */}

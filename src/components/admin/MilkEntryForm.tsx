@@ -165,15 +165,13 @@ export const MilkEntryForm: React.FC = () => {
 
     const { error } = await supabase
       .from('milk_entries')
-      .upsert({
+      .insert({
         customer_id: selectedCustomerId,
         entry_date: format(date, 'yyyy-MM-dd'),
         quantity_liters: quantity,
         price_per_liter: pricePerLiter,
         total_amount: totalAmount,
         notes: notes || null
-      }, {
-        onConflict: 'customer_id,entry_date'
       });
 
     if (error) {

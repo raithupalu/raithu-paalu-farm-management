@@ -29,7 +29,10 @@ import ReportsPage from "./pages/admin/ReportsPage";
 import LogsPage from "./pages/admin/LogsPage";
 
 // User Pages
-import UserProgress from "./pages/user/UserProgress";
+import UserDashboard from "./pages/user/UserDashboard";
+import UserOrders from "./pages/user/UserOrders";
+import UserPayments from "./pages/user/UserPayments";
+import UserProfile from "./pages/user/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -121,12 +124,12 @@ const AppRoutes = () => {
           <UserLayout />
         </ProtectedRoute>
       }>
-        <Route index element={<UserProgress />} />
-        <Route path="orders" element={<UserProgress />} />
-        <Route path="payments" element={<UserProgress />} />
-        <Route path="subscription" element={<UserProgress />} />
-        <Route path="requests" element={<UserProgress />} />
-        <Route path="profile" element={<UserProgress />} />
+        <Route index element={<UserDashboard />} />
+        <Route path="orders" element={<UserOrders />} />
+        <Route path="payments" element={<UserPayments />} />
+        <Route path="subscription" element={<UserDashboard />} />
+        <Route path="requests" element={<UserDashboard />} />
+        <Route path="profile" element={<UserProfile />} />
       </Route>
 
       {/* Catch-all */}

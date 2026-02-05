@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Milk, Eye, EyeOff, ArrowRight, Phone, User, Mail } from 'lucide-react';
+import { Milk, Eye, EyeOff, ArrowRight, Phone, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,6 @@ const RegisterPage: React.FC = () => {
   const { register, user } = useAuth();
   
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,7 +33,7 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !phone || !password || !confirmPassword) {
+    if (!username || !phone || !password || !confirmPassword) {
       toast({
         variant: "destructive",
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
@@ -44,14 +43,15 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate username format (alphanumeric and underscores only)
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
       toast({
         variant: "destructive",
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
-        description: language === 'te' ? 'చెల్లుబాటు అయ్యే ఇమెయిల్ నమోదు చేయండి' : 
-                     language === 'hi' ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email address',
+        description: language === 'te' ? 'యూజర్‌నేమ్‌లో అక్షరాలు, సంఖ్యలు మరియు అండర్‌స్కోర్‌లు మాత్రమే ఉండాలి' : 
+                     language === 'hi' ? 'उपयोगकर्ता नाम में केवल अक्षर, संख्याएं और अंडरस्कोर होने चाहिए' : 
+                     'Username can only contain letters, numbers, and underscores',
       });
       return;
     }
@@ -89,23 +89,38 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await register(email, password, username, phone);
+      // Generate internal email from username
+      const internalEmail = `${username.toLowerCase()}@raithupaalu.local`;
+      
+      const { error } = await register(internalEmail, password, username, phone);
       
       if (!error) {
         toast({
           title: language === 'te' ? 'ఖాతా సృష్టించబడింది' : 
                  language === 'hi' ? 'खाता बनाया गया' : 'Account Created',
-          description: language === 'te' ? 'దయచేసి మీ ఇమెయిల్‌ను ధృవీకరించండి' : 
-                       language === 'hi' ? 'कृपया अपना ईमेल सत्यापित करें' : 'Please check your email to verify your account',
+          description: language === 'te' ? 'స్వాగతం!' : 
+                       language === 'hi' ? 'स्वागत है!' : 'Welcome!',
         });
-        navigate('/login');
+        // Auto-login after registration since email is auto-confirmed
       } else {
+        // Handle duplicate username error
+        if (error.includes('already registered')) {
+          toast({
+            variant: "destructive",
+            title: language === 'te' ? 'నమోదు విఫలమైంది' : 
+                   language === 'hi' ? 'पंजीकरण विफल' : 'Registration Failed',
+            description: language === 'te' ? 'ఈ యూజర్‌నేమ్ ఇప్పటికే ఉపయోగంలో ఉంది' : 
+                         language === 'hi' ? 'यह उपयोगकर्ता नाम पहले से उपयोग में है' : 
+                         'This username is already taken',
+          });
+        } else {
         toast({
           variant: "destructive",
           title: language === 'te' ? 'నమోదు విఫలమైంది' : 
                  language === 'hi' ? 'पंजीकरण विफल' : 'Registration Failed',
           description: error,
         });
+        }
       }
     } catch (error) {
       toast({
@@ -185,25 +200,6 @@ const RegisterPage: React.FC = () => {
                                'Enter your name'}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="h-12 pl-12"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                {language === 'te' ? 'ఇమెయిల్' : language === 'hi' ? 'ईमेल' : 'Email'}
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={language === 'te' ? 'మీ ఇమెయిల్ నమోదు చేయండి' : 
-                               language === 'hi' ? 'अपना ईमेल दर्ज करें' : 
-                               'Enter your email'}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="h-12 pl-12"
                 />
               </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Milk, Eye, EyeOff, ArrowRight, Shield, Mail } from 'lucide-react';
+import { Milk, Eye, EyeOff, ArrowRight, Shield, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
   const { t, language } = useLanguage();
   const { login, user } = useAuth();
   
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -33,7 +33,7 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!username || !password) {
       toast({
         variant: "destructive",
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
@@ -46,14 +46,19 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await login(email, password);
+      // Generate internal email from username
+      const internalEmail = `${username.toLowerCase()}@raithupaalu.local`;
+      
+      const { error } = await login(internalEmail, password);
       
       if (error) {
         toast({
           variant: "destructive",
           title: language === 'te' ? 'లాగిన్ విఫలమైంది' : 
                  language === 'hi' ? 'लॉगिन विफल' : 'Login Failed',
-          description: error,
+          description: language === 'te' ? 'తప్పు యూజర్‌నేమ్ లేదా పాస్‌వర్డ్' : 
+                       language === 'hi' ? 'गलत उपयोगकर्ता नाम या पासवर्ड' : 
+                       'Invalid username or password',
         });
       } else {
         toast({
@@ -105,18 +110,18 @@ const LoginPage: React.FC = () => {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">
-                <Mail className="inline h-4 w-4 mr-1" />
-                {language === 'te' ? 'ఇమెయిల్' : language === 'hi' ? 'ईमेल' : 'Email'}
+              <Label htmlFor="username">
+                <User className="inline h-4 w-4 mr-1" />
+                {t('username')}
               </Label>
               <Input
-                id="email"
-                type="email"
-                placeholder={language === 'te' ? 'మీ ఇమెయిల్ నమోదు చేయండి' : 
-                             language === 'hi' ? 'अपना ईमेल दर्ज करें' : 
-                             'Enter your email'}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder={language === 'te' ? 'మీ యూజర్‌నేమ్ నమోదు చేయండి' : 
+                             language === 'hi' ? 'अपना उपयोगकर्ता नाम दर्ज करें' : 
+                             'Enter your username'}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="h-12"
               />
             </div>

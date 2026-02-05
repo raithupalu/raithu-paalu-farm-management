@@ -48,22 +48,7 @@ const LoginPage: React.FC = () => {
     try {
       const { error } = await login(email, password);
       
-<<<<<<< HEAD
-      if (success) {
-        // Determine redirect path based on user role
-        const redirectPath = user?.role === 'admin' ? '/admin' : '/dashboard';
-        
-        toast({
-          title: t('loginSuccess'),
-          description: `${t('welcomeBack')}, ${user?.role === 'admin' ? 'admin' : user?.username}!`,
-        });
-        
-        // Navigate based on role
-        navigate(redirectPath);
-      } else {
-=======
       if (error) {
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
         toast({
           variant: "destructive",
           title: language === 'te' ? 'లాగిన్ విఫలమైంది' : 
@@ -120,14 +105,10 @@ const LoginPage: React.FC = () => {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-<<<<<<< HEAD
-              <Label htmlFor="username">Username</Label>
-=======
               <Label htmlFor="email">
                 <Mail className="inline h-4 w-4 mr-1" />
                 {language === 'te' ? 'ఇమెయిల్' : language === 'hi' ? 'ईमेल' : 'Email'}
               </Label>
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
               <Input
                 id="email"
                 type="email"
@@ -137,7 +118,6 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12"
-                autoComplete="username"
               />
             </div>
 

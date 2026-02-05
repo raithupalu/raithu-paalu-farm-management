@@ -69,29 +69,30 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const response = await register({
-        username,
-        phone,
-        password
-      });
+      const success = await register(username, password, phone);
       
-      console.log("✅ Registration successful:", response);
-      
-      toast({
-        title: language === 'te' ? 'ఖాతా సృష్టించబడింది' : 
-               language === 'hi' ? 'खाता बनाया गया' : 'Account Created',
-        description: language === 'te' ? `స్వాగతం, ${username}!` : 
-                     language === 'hi' ? `स्वागत है, ${username}!` : `Welcome, ${username}!`,
-      });
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error("❌ Registration error:", error);
+      if (success) {
+        toast({
+          title: language === 'te' ? 'ఖాతా సృష్టించబడింది' : 
+                 language === 'hi' ? 'खाता बनाया गया' : 'Account Created',
+          description: language === 'te' ? 'స్వాగతం!' : 
+                       language === 'hi' ? 'स्वागत है!' : 'Welcome!',
+        });
+        navigate('/dashboard');
+      } else {
+        toast({
+          variant: "destructive",
+          title: language === 'te' ? 'నమోదు విఫలమైంది' : 
+                 language === 'hi' ? 'पंजीकरण विफल' : 'Registration Failed',
+          description: language === 'te' ? 'దయచేసి మళ్ళీ ప్రయత్నించండి' : 
+                       language === 'hi' ? 'कृपया पुनः प्रयास करें' : 'Please try again',
+        });
+      }
+    } catch (error) {
       toast({
         variant: "destructive",
-        title: language === 'te' ? 'నమోదు విఫలమైంది' : 
-               language === 'hi' ? 'पंजीकरण विफल' : 'Registration Failed',
-        description: error.message || (language === 'te' ? 'దయచేసి మళ్ళీ ప్రయత్నించండి' : 
-                           language === 'hi' ? 'कृपया पुनः प्रयास करें' : 'Please try again'),
+        title: t('errorOccurred'),
+        description: String(error),
       });
     } finally {
       setIsLoading(false);

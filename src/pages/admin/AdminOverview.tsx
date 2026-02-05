@@ -1,11 +1,4 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-=======
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
+import React from 'react';
 import {
   Milk,
   Users,
@@ -14,217 +7,72 @@ import {
   TrendingDown,
   Calendar,
   AlertCircle,
-  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-<<<<<<< HEAD
-import { useAuth } from '@/contexts/AuthContext';
-import { getMilkStats, getPaymentStats, getUsers, getBuffaloStats, getExpenseStats } from '@/services/api';
 
-interface MilkStats {
-  today: { totalQuantity: number; totalAmount: number };
-  thisMonth: { totalQuantity: number; totalAmount: number };
-  dailyStats: { _id: string; quantity: number }[];
-}
+const stats = [
+  {
+    titleKey: 'todaysMilk' as const,
+    value: '245 L',
+    change: '+12%',
+    trend: 'up',
+    icon: Milk,
+    color: 'primary',
+  },
+  {
+    titleKey: 'monthlyMilk' as const,
+    value: '5,840 L',
+    change: '+8%',
+    trend: 'up',
+    icon: Calendar,
+    color: 'success',
+  },
+  {
+    titleKey: 'totalCustomers' as const,
+    value: '156',
+    change: '+5',
+    trend: 'up',
+    icon: Users,
+    color: 'accent',
+  },
+  {
+    titleKey: 'todaysIncome' as const,
+    value: '₹18,500',
+    change: '+15%',
+    trend: 'up',
+    icon: IndianRupee,
+    color: 'success',
+  },
+  {
+    titleKey: 'pendingPayments' as const,
+    value: '₹42,300',
+    change: '23 customers',
+    trend: 'down',
+    icon: AlertCircle,
+    color: 'warning',
+  },
+  {
+    titleKey: 'totalBuffaloes' as const,
+    value: '18',
+    change: '2 new',
+    trend: 'up',
+    icon: Milk,
+    color: 'primary',
+  },
+];
 
-interface PaymentStats {
-  total: number;
-  thisMonth: number;
-  pending: number;
-  pendingCount: number;
-}
-
-interface User {
-  _id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-}
-
-interface BuffaloStats {
-  total: number;
-  healthy: number;
-  sick: number;
-  pregnant: number;
-  totalProduction: number;
-}
-
-interface ExpenseStats {
-  thisMonth: number;
-  pending: number;
-  byCategory: { _id: string; total: number }[];
-=======
-import { supabase } from '@/integrations/supabase/client';
-
-interface DashboardStats {
-  todaysMilk: number;
-  monthlyMilk: number;
-  totalCustomers: number;
-  activeCustomers: number;
-  totalBuffaloes: number;
-  activeBuffaloes: number;
-  pendingPayments: number;
-  pendingCustomerCount: number;
-  todaysIncome: number;
-  monthlyIncome: number;
-}
-
-interface RecentEntry {
-  id: string;
-  customer_name: string;
-  quantity: number;
-  time: string;
-  amount: number;
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
-}
+const recentEntries = [
+  { customer: 'Ramesh Kumar', quantity: '2L', time: '6:30 AM', amount: '₹150' },
+  { customer: 'Lakshmi Devi', quantity: '1.5L', time: '6:45 AM', amount: '₹112' },
+  { customer: 'Suresh Reddy', quantity: '3L', time: '7:00 AM', amount: '₹225' },
+  { customer: 'Priya Sharma', quantity: '1L', time: '7:15 AM', amount: '₹75' },
+  { customer: 'Venkat Rao', quantity: '2.5L', time: '7:30 AM', amount: '₹187' },
+];
 
 const AdminOverview: React.FC = () => {
   const { t, language } = useLanguage();
-<<<<<<< HEAD
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [milkStats, setMilkStats] = useState<MilkStats | null>(null);
-  const [paymentStats, setPaymentStats] = useState<PaymentStats | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [buffaloStats, setBuffaloStats] = useState<BuffaloStats | null>(null);
-  const [expenseStats, setExpenseStats] = useState<ExpenseStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [milk, payment, userData, buffalo, expense] = await Promise.all([
-          getMilkStats(),
-          getPaymentStats(),
-          getUsers(),
-          getBuffaloStats(),
-          getExpenseStats()
-        ]);
-        
-        setMilkStats(milk);
-        setPaymentStats(payment);
-        setUsers(userData);
-        setBuffaloStats(buffalo);
-        setExpenseStats(expense);
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-=======
-  const navigate = useNavigate();
-  
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const startOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
-
-    try {
-      // Fetch all data in parallel
-      const [
-        todayMilkRes,
-        monthMilkRes,
-        customersRes,
-        buffaloesRes,
-        ordersRes,
-        recentEntriesRes
-      ] = await Promise.all([
-        // Today's milk entries
-        supabase
-          .from('milk_entries')
-          .select('quantity_liters, total_amount')
-          .eq('entry_date', today),
-        
-        // Monthly milk entries
-        supabase
-          .from('milk_entries')
-          .select('quantity_liters, total_amount')
-          .gte('entry_date', startOfMonth),
-        
-        // Customers
-        supabase
-          .from('customers')
-          .select('id, is_active'),
-        
-        // Buffaloes
-        supabase
-          .from('buffaloes')
-          .select('id, status'),
-        
-        // Orders with pending payments
-        supabase
-          .from('orders')
-          .select('total_amount, payment_status, customer_id')
-          .neq('payment_status', 'paid'),
-        
-        // Recent entries with customer info
-        supabase
-          .from('milk_entries')
-          .select('id, quantity_liters, total_amount, created_at, customers(name)')
-          .order('created_at', { ascending: false })
-          .limit(5)
-      ]);
-
-      // Calculate stats
-      const todaysMilk = todayMilkRes.data?.reduce((sum, e) => sum + Number(e.quantity_liters), 0) || 0;
-      const todaysIncome = todayMilkRes.data?.reduce((sum, e) => sum + Number(e.total_amount), 0) || 0;
-      const monthlyMilk = monthMilkRes.data?.reduce((sum, e) => sum + Number(e.quantity_liters), 0) || 0;
-      const monthlyIncome = monthMilkRes.data?.reduce((sum, e) => sum + Number(e.total_amount), 0) || 0;
-      
-      const totalCustomers = customersRes.data?.length || 0;
-      const activeCustomers = customersRes.data?.filter(c => c.is_active).length || 0;
-      
-      const totalBuffaloes = buffaloesRes.data?.length || 0;
-      const activeBuffaloes = buffaloesRes.data?.filter(b => b.status === 'active').length || 0;
-      
-      const pendingPayments = ordersRes.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
-      const pendingCustomerCount = new Set(ordersRes.data?.map(o => o.customer_id)).size || 0;
-
-      setStats({
-        todaysMilk,
-        monthlyMilk,
-        totalCustomers,
-        activeCustomers,
-        totalBuffaloes,
-        activeBuffaloes,
-        pendingPayments,
-        pendingCustomerCount,
-        todaysIncome,
-        monthlyIncome
-      });
-
-      // Format recent entries
-      const entries: RecentEntry[] = (recentEntriesRes.data || []).map(e => ({
-        id: e.id,
-        customer_name: (e.customers as any)?.name || 'Unknown',
-        quantity: Number(e.quantity_liters),
-        time: format(new Date(e.created_at), 'h:mm a'),
-        amount: Number(e.total_amount)
-      }));
-      setRecentEntries(entries);
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-    
-    setIsLoading(false);
-  };
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 
   const getColorClasses = (color: string) => {
     switch (color) {
@@ -241,144 +89,17 @@ const AdminOverview: React.FC = () => {
     }
   };
 
-<<<<<<< HEAD
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="p-6">
-              <div className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/2 mb-2" />
-                <div className="h-8 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-4 bg-muted rounded w-1/3" />
-              </div>
-            </Card>
-          ))}
-        </div>
-=======
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
-      </div>
-    );
-  }
-
-<<<<<<< HEAD
-  const stats = [
-    {
-      titleKey: 'todaysMilk' as const,
-      value: `${milkStats?.today?.totalQuantity?.toFixed(1) || 0} L`,
-      change: '+12%',
-      trend: 'up' as const,
-      icon: Milk,
-      color: 'primary' as const,
-    },
-    {
-      titleKey: 'monthlyMilk' as const,
-      value: `${milkStats?.thisMonth?.totalQuantity?.toFixed(0) || 0} L`,
-      change: '+8%',
-      trend: 'up' as const,
-      icon: Calendar,
-      color: 'success' as const,
-    },
-    {
-      titleKey: 'totalCustomers' as const,
-      value: users.length.toString(),
-      change: `+${users.filter(u => u.status === 'active').length}`,
-      trend: 'up' as const,
-      icon: Users,
-      color: 'accent' as const,
-    },
-    {
-      titleKey: 'todaysIncome' as const,
-      value: `₹${milkStats?.today?.totalAmount?.toLocaleString() || 0}`,
-      change: '+15%',
-      trend: 'up' as const,
-      icon: IndianRupee,
-      color: 'success' as const,
-    },
-    {
-      titleKey: 'pendingPayments' as const,
-      value: `₹${paymentStats?.pending?.toLocaleString() || 0}`,
-      change: `${paymentStats?.pendingCount || 0} customers`,
-      trend: 'down' as const,
-      icon: AlertCircle,
-      color: 'warning' as const,
-    },
-    {
-      titleKey: 'totalBuffaloes' as const,
-      value: buffaloStats?.total?.toString() || '0',
-      change: `${buffaloStats?.healthy || 0} healthy`,
-      trend: 'up' as const,
-      icon: Milk,
-      color: 'primary' as const,
-=======
-  const statCards = [
-    {
-      title: t('todaysMilk'),
-      value: `${stats?.todaysMilk.toFixed(1) || 0} L`,
-      change: `₹${stats?.todaysIncome.toLocaleString() || 0}`,
-      trend: 'up',
-      icon: Milk,
-      color: 'primary',
-    },
-    {
-      title: language === 'te' ? 'నెలవారీ పాలు' : language === 'hi' ? 'मासिक दूध' : 'Monthly Milk',
-      value: `${stats?.monthlyMilk.toFixed(1) || 0} L`,
-      change: `₹${stats?.monthlyIncome.toLocaleString() || 0}`,
-      trend: 'up',
-      icon: Calendar,
-      color: 'success',
-    },
-    {
-      title: t('totalCustomers'),
-      value: stats?.totalCustomers.toString() || '0',
-      change: `${stats?.activeCustomers || 0} active`,
-      trend: 'up',
-      icon: Users,
-      color: 'accent',
-    },
-    {
-      title: t('todaysIncome'),
-      value: `₹${stats?.todaysIncome.toLocaleString() || 0}`,
-      change: format(new Date(), 'dd MMM'),
-      trend: 'up',
-      icon: IndianRupee,
-      color: 'success',
-    },
-    {
-      title: t('pendingPayments'),
-      value: `₹${stats?.pendingPayments.toLocaleString() || 0}`,
-      change: `${stats?.pendingCustomerCount || 0} customers`,
-      trend: 'down',
-      icon: AlertCircle,
-      color: 'warning',
-    },
-    {
-      title: t('totalBuffaloes'),
-      value: stats?.totalBuffaloes.toString() || '0',
-      change: `${stats?.activeBuffaloes || 0} milking`,
-      trend: 'up',
-      icon: Milk,
-      color: 'primary',
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
-    },
-  ];
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {statCards.map((stat, index) => (
+        {stats.map((stat, index) => (
           <Card key={index} className="stat-card">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
+                    {t(stat.titleKey)}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-1">
                     {stat.value}
@@ -403,7 +124,7 @@ const AdminOverview: React.FC = () => {
         ))}
       </div>
 
-      {/* Quick Actions & Recent Activity */}
+      {/* Quick Actions & Recent Entries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
         <Card className="lg:col-span-1">
@@ -414,82 +135,45 @@ const AdminOverview: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-<<<<<<< HEAD
-            <Button className="w-full justify-start btn-golden" onClick={() => navigate('/admin/milk-entry')}>
+            <Button className="w-full justify-start btn-golden">
               <Milk className="mr-2 h-4 w-4" />
               {t('milkEntry')}
             </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/customers')}>
-=======
-            <Button 
-              className="w-full justify-start btn-golden"
-              onClick={() => navigate('/admin/milk-entry')}
-            >
-              <Milk className="mr-2 h-4 w-4" />
-              {t('milkEntry')}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => navigate('/admin/customers')}
-            >
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
+            <Button variant="outline" className="w-full justify-start">
               <Users className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'కస్టమర్లు నిర్వహించు' : 
-               language === 'hi' ? 'ग्राहक प्रबंधित करें' : 'Manage Customers'}
+              {language === 'te' ? 'కస్టమర్ జోడించు' : 
+               language === 'hi' ? 'ग्राहक जोड़ें' : 'Add Customer'}
             </Button>
-<<<<<<< HEAD
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/expenses')}>
+            <Button variant="outline" className="w-full justify-start">
               <IndianRupee className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'ఖర్చు జోడించు' : 
-               language === 'hi' ? 'खर्च जोड़ें' : 'Add Expense'}
+              {language === 'te' ? 'చెల్లింపు సేకరించు' : 
+               language === 'hi' ? 'भुगतान लें' : 'Collect Payment'}
             </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/prices')}>
-=======
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => navigate('/admin/orders')}
-            >
-              <IndianRupee className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'ఆర్డర్లు చూడండి' : 
-               language === 'hi' ? 'ऑर्डर देखें' : 'View Orders'}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => navigate('/admin/expenses')}
-            >
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
+            <Button variant="outline" className="w-full justify-start">
               <AlertCircle className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'ఖర్చులు జోడించు' : 
-               language === 'hi' ? 'खर्च जोड़ें' : 'Add Expense'}
+              {language === 'te' ? 'ధర నవీకరించు' : 
+               language === 'hi' ? 'कीमत अपडेट करें' : 'Update Price'}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Recent Customers */}
+        {/* Recent Entries */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">
-              {language === 'te' ? 'ఇటీవలి కస్టమర్లు' : 
-               language === 'hi' ? 'हाल के ग्राहक' : 'Recent Customers'}
+              {language === 'te' ? 'ఇటీవలి ఎంట్రీలు' : 
+               language === 'hi' ? 'हाल की प्रविष्टियाँ' : 'Recent Entries'}
             </CardTitle>
-<<<<<<< HEAD
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/customers')}>
-=======
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/milk-entry')}>
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
+            <Button variant="ghost" size="sm">
               {language === 'te' ? 'అన్నీ చూడండి' : 
                language === 'hi' ? 'सभी देखें' : 'View All'}
             </Button>
           </CardHeader>
           <CardContent>
-<<<<<<< HEAD
             <div className="space-y-4">
-              {users.slice(0, 5).map((customer) => (
+              {recentEntries.map((entry, index) => (
                 <div 
-                  key={customer._id}
+                  key={index}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -497,18 +181,13 @@ const AdminOverview: React.FC = () => {
                       <Users className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                      <p className="font-medium text-foreground">{entry.customer}</p>
+                      <p className="text-sm text-muted-foreground">{entry.time}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      customer.status === 'active' ? 'bg-green/10 text-green-600' :
-                      customer.status === 'pending' ? 'bg-yellow/10 text-yellow-600' :
-                      'bg-red/10 text-red-600'
-                    }`}>
-                      {customer.status}
-                    </span>
+                    <p className="font-semibold text-foreground">{entry.quantity}</p>
+                    <p className="text-sm text-success">{entry.amount}</p>
                   </div>
                 </div>
               ))}
@@ -517,102 +196,40 @@ const AdminOverview: React.FC = () => {
         </Card>
       </div>
 
-      {/* Monthly Trend Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {language === 'te' ? 'నెలవారీ ట్రెండ్' : 
-             language === 'hi' ? 'मासिक रुझान' : 'Monthly Trend'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-64">
-          <div className="flex items-end justify-between h-full gap-2">
-            {milkStats?.dailyStats?.slice(-6).map((day, i) => (
-              <div key={day._id} className="flex flex-col items-center gap-2 flex-1">
-                <div 
-                  className="w-full bg-primary/20 rounded-t"
-                  style={{ height: `${(day.quantity / (Math.max(...milkStats.dailyStats.map(d => d.quantity)) || 1)) * 100}%` }}
-                >
-                  <div 
-                    className="w-full bg-primary rounded-t transition-all duration-500"
-                    style={{ height: '100%' }}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(day._id).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Income vs Expenses Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {language === 'te' ? 'ఆదాయం vs ఖర్చులు' : 
-             language === 'hi' ? 'आय vs खर्च' : 'Income vs Expenses'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-64">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>This Month</span>
-                <span className="text-muted-foreground">
-                  Income: ₹{milkStats?.thisMonth?.totalAmount?.toLocaleString() || 0} | 
-                  Expenses: ₹{expenseStats?.thisMonth?.toLocaleString() || 0}
-                </span>
-              </div>
-              <div className="flex h-4 rounded-full overflow-hidden">
-                <div 
-                  className="bg-green-500"
-                  style={{ width: `${((milkStats?.thisMonth?.totalAmount || 0) / ((milkStats?.thisMonth?.totalAmount || 0) + (expenseStats?.thisMonth || 0))) * 100}%` }}
-                />
-                <div 
-                  className="bg-red-400"
-                  style={{ width: `${((expenseStats?.thisMonth || 0) / ((milkStats?.thisMonth?.totalAmount || 0) + (expenseStats?.thisMonth || 0))) * 100}%` }}
-                />
-              </div>
+      {/* Placeholder for Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {language === 'te' ? 'నెలవారీ ట్రెండ్' : 
+               language === 'hi' ? 'मासिक रुझान' : 'Monthly Trend'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-64 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>{language === 'te' ? 'చార్ట్ త్వరలో వస్తుంది' : 
+                  language === 'hi' ? 'चार्ट जल्द आ रहा है' : 'Chart coming soon'}</p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-=======
-            {recentEntries.length > 0 ? (
-              <div className="space-y-4">
-                {recentEntries.map((entry) => (
-                  <div 
-                    key={entry.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{entry.customer_name}</p>
-                        <p className="text-sm text-muted-foreground">{entry.time}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">{entry.quantity.toFixed(2)}L</p>
-                      <p className="text-sm text-success">₹{entry.amount.toFixed(0)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Milk className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>{language === 'te' ? 'ఎంట్రీలు లేవు' : language === 'hi' ? 'कोई प्रविष्टियाँ नहीं' : 'No entries yet'}</p>
-              </div>
-            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {language === 'te' ? 'ఆదాయం vs ఖర్చులు' : 
+               language === 'hi' ? 'आय vs खर्च' : 'Income vs Expenses'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-64 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <IndianRupee className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>{language === 'te' ? 'చార్ట్ త్వరలో వస్తుంది' : 
+                  language === 'hi' ? 'चार्ट जल्द आ रहा है' : 'Chart coming soon'}</p>
+            </div>
           </CardContent>
         </Card>
       </div>
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
     </div>
   );
 };

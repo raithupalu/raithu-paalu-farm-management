@@ -1,18 +1,12 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { login as apiLogin, register as apiRegister, getCurrentUser } from '@/services/api';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-export type UserRole = 'admin' | 'user' | null;
+type UserRole = 'admin' | 'user' | null;
 
-export interface User {
-  _id: string;
+interface User {
+  id: string;
   username: string;
-  name?: string;
-  email?: string;
-  phone?: string;
   role: UserRole;
-  status?: string;
-  address?: string;
-  village?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -20,17 +14,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (data: { username: string; phone: string; password: string; }) => Promise<boolean>;
-  updateUser: (userData: Partial<User>) => void;
-  refreshUser: () => Promise<void>;
-  loading: boolean;
+  register: (username: string, password: string, phone: string) => Promise<boolean>;
 }
-
-// Update user in both state and localStorage
-const updateUserInStorage = (userData: User) => {
-  localStorage.setItem('user', JSON.stringify(userData));
-  return userData;
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -38,108 +23,64 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+// Demo credentials
+const DEMO_USERS = {
+  admin: { id: '1', username: 'admin', password: 'admin123', role: 'admin' as UserRole },
+};
 
-  // Check for existing token on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (token && savedUser) {
-        try {
-          const userData = await getCurrentUser();
-          setUser(userData);
-        } catch {
-          // Token might be invalid, try parsing saved user
-          try {
-            const parsedUser = JSON.parse(savedUser);
-            if (parsedUser && parsedUser._id) {
-              setUser(parsedUser);
-            } else {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-            }
-          } catch {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-          }
-        }
-      }
-      setLoading(false);
-    };
-    checkAuth();
-  }, []);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    try {
-      // Login via API (handles admin and regular users)
-      const response = await apiLogin(username, password);
-      
-      localStorage.setItem('token', response.token);
-      
-      const userData: User = {
-        _id: response.user?._id || response._id,
-        username: response.user?.username || response.username,
-        name: response.user?.name || response.name,
-        email: response.user?.email || response.email,
-        phone: response.user?.phone || response.phone,
-        role: response.user?.role || response.role || 'user',
-        status: response.user?.status || response.status || 'pending'
+    // Check admin credentials
+    if (username === DEMO_USERS.admin.username && password === DEMO_USERS.admin.password) {
+      const adminUser: User = {
+        id: DEMO_USERS.admin.id,
+        username: DEMO_USERS.admin.username,
+        role: 'admin',
       };
-      
-      setUser(updateUserInStorage(userData));
+      setUser(adminUser);
+      localStorage.setItem('user', JSON.stringify(adminUser));
       return true;
-    } catch (error) {
-      return false;
     }
+    
+    // For demo purposes, allow any other username/password as regular user
+    if (username && password.length >= 6) {
+      const regularUser: User = {
+        id: Date.now().toString(),
+        username,
+        role: 'user',
+      };
+      setUser(regularUser);
+      localStorage.setItem('user', JSON.stringify(regularUser));
+      return true;
+    }
+    
+    return false;
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
   }, []);
 
-  const register = useCallback(async (data: { username: string; phone: string; password: string; }): Promise<boolean> => {
-    try {
-      const response = await apiRegister(data);
-      
-      localStorage.setItem('token', response.token);
-      
-      const userData: User = {
-        _id: response.user?._id || response._id,
-        username: response.user?.username || response.username,
-        phone: response.user?.phone || response.phone,
-        role: response.user?.role || response.role || 'user',
-        status: response.user?.status || 'pending'
+  const register = useCallback(async (username: string, password: string, phone: string): Promise<boolean> => {
+    // For demo purposes, allow registration with valid data
+    if (username && password.length >= 6 && phone.length >= 10) {
+      const newUser: User = {
+        id: Date.now().toString(),
+        username,
+        role: 'user',
+        phone,
       };
-      
-      setUser(updateUserInStorage(userData));
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
       return true;
-    } catch (error) {
-      return false;
     }
-  }, []);
-
-  const updateUser = useCallback((userData: Partial<User>) => {
-    setUser(prev => {
-      if (!prev) return prev;
-      const updated = { ...prev, ...userData };
-      updateUserInStorage(updated);
-      return updated;
-    });
-  }, []);
-
-  const refreshUser = useCallback(async () => {
-    try {
-      const userData = await getCurrentUser();
-      setUser(updateUserInStorage(userData));
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
-    }
+    return false;
   }, []);
 
   return (
@@ -148,10 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isAuthenticated: !!user,
       login, 
       logout, 
-      register,
-      updateUser,
-      refreshUser,
-      loading
+      register 
     }}>
       {children}
     </AuthContext.Provider>

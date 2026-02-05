@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { createUser, getUsers } from '@/services/api';
+import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AddCustomerDialogProps {
@@ -24,11 +24,6 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ onCustomer
     name: '',
     phone: '',
     address: '',
-    village: '',
-    taluka: '',
-    district: '',
-    username: '',
-    password: '',
     subscription_type: 'daily',
     default_quantity: '1'
   });
@@ -36,63 +31,52 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ onCustomer
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.phone.trim() || !formData.username.trim() || !formData.password.trim()) {
+    if (!formData.name.trim() || !formData.phone.trim()) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Name, phone, username and password are required'
+        description: 'Name and phone are required'
       });
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      // Create user account
-      const userResponse = await createUser({
-        username: formData.username.trim(),
+    const { error } = await supabase
+      .from('customers')
+      .insert({
         name: formData.name.trim(),
-        email: `${formData.username.trim()}@example.com`,
         phone: formData.phone.trim(),
-        password: formData.password,
-        address: formData.address.trim() || undefined,
-        village: formData.village.trim() || undefined,
-        taluka: formData.taluka.trim() || undefined,
-        district: formData.district.trim() || undefined,
-        role: 'user',
-        status: 'active'
+        address: formData.address.trim() || null,
+        subscription_type: formData.subscription_type,
+        default_quantity: parseFloat(formData.default_quantity)
       });
 
+    if (error) {
+      console.error('Error adding customer:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message
+      });
+    } else {
       toast({
         title: language === 'te' ? 'విజయం!' : language === 'hi' ? 'सफलता!' : 'Success!',
         description: language === 'te' ? 'కస్టమర్ జోడించబడింది' : 
                      language === 'hi' ? 'ग्राहक जोड़ा गया' : 'Customer added successfully'
       });
-
       setFormData({
         name: '',
         phone: '',
         address: '',
-        village: '',
-        taluka: '',
-        district: '',
-        username: '',
-        password: '',
         subscription_type: 'daily',
         default_quantity: '1'
       });
       setOpen(false);
       onCustomerAdded?.();
-    } catch (error: any) {
-      console.error('Error adding customer:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to add customer'
-      });
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   return (
@@ -103,7 +87,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ onCustomer
           {language === 'te' ? 'కస్టమర్ జోడించండి' : language === 'hi' ? 'ग्राहक जोड़ें' : 'Add Customer'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {language === 'te' ? 'కొత్త కస్టమర్ జోడించండి' : 
@@ -122,34 +106,6 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ onCustomer
               placeholder={language === 'te' ? 'కస్టమర్ పేరు' : language === 'hi' ? 'ग्राहक का नाम' : 'Customer name'}
               required
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">
-                {language === 'te' ? 'యూజర్‌నేమ్' : language === 'hi' ? 'यूज़रनेम' : 'Username'} *
-              </Label>
-              <Input
-                id="username"
-                value={formData.username}
-                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                placeholder="username"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                {language === 'te' ? 'పాస్‌వర్డ్' : language === 'hi' ? 'पासवर्ड' : 'Password'} *
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="******"
-                required
-              />
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -178,42 +134,6 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ onCustomer
                            language === 'hi' ? 'पता (वैकल्पिक)' : 'Address (optional)'}
               rows={2}
             />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="village">
-                {language === 'te' ? 'గ్రామం' : language === 'hi' ? 'गाँव' : 'Village'}
-              </Label>
-              <Input
-                id="village"
-                value={formData.village}
-                onChange={(e) => setFormData(prev => ({ ...prev, village: e.target.value }))}
-                placeholder="Village"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="taluka">
-                {language === 'te' ? 'తాలూకా' : language === 'hi' ? 'तालुका' : 'Taluka'}
-              </Label>
-              <Input
-                id="taluka"
-                value={formData.taluka}
-                onChange={(e) => setFormData(prev => ({ ...prev, taluka: e.target.value }))}
-                placeholder="Taluka"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="district">
-                {language === 'te' ? 'జిల్లా' : language === 'hi' ? 'जिला' : 'District'}
-              </Label>
-              <Input
-                id="district"
-                value={formData.district}
-                onChange={(e) => setFormData(prev => ({ ...prev, district: e.target.value }))}
-                placeholder="District"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

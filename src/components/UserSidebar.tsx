@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { NavLink as RouterNavLink } from 'react-router-dom';
+import React from 'react';
+import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import {
   BarChart3,
   ShoppingCart,
@@ -8,20 +8,14 @@ import {
   MessageSquare,
   User,
   LogOut,
+  ChevronLeft,
+  ChevronRight,
   Milk,
-  History,
-  Package,
-  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-<<<<<<< HEAD
-import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-=======
 import { useAuth } from '@/hooks/useAuth';
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 
 interface UserSidebarProps {
   collapsed: boolean;
@@ -29,116 +23,107 @@ interface UserSidebarProps {
 }
 
 const menuItems = [
-  { icon: BarChart3, path: '/dashboard', labelKey: 'overview' as const, label: 'Overview' },
-  { icon: History, path: '/dashboard/progress', labelKey: 'progress' as const, label: 'My Progress' },
-  { icon: ShoppingCart, path: '/dashboard/orders', labelKey: 'orders' as const, label: 'Orders' },
-  { icon: CreditCard, path: '/dashboard/payments', labelKey: 'payments' as const, label: 'Payments' },
-  { icon: Package, path: '/dashboard/subscription', labelKey: 'subscription' as const, label: 'Subscription' },
-  { icon: MessageSquare, path: '/dashboard/requests', labelKey: 'requests' as const, label: 'Requests' },
-  { icon: User, path: '/dashboard/profile', labelKey: 'profile' as const, label: 'Profile' },
+  { icon: BarChart3, path: '/dashboard', labelKey: 'progress' as const },
+  { icon: ShoppingCart, path: '/dashboard/orders', labelKey: 'orders' as const },
+  { icon: CreditCard, path: '/dashboard/payments', labelKey: 'payments' as const },
+  { icon: Calendar, path: '/dashboard/subscription', labelKey: 'subscription' as const },
+  { icon: MessageSquare, path: '/dashboard/requests', labelKey: 'requests' as const },
+  { icon: User, path: '/dashboard/profile', labelKey: 'profile' as const },
 ];
 
-const UserSidebar: React.FC<UserSidebarProps> = ({ collapsed, onToggle }) => {
-  const { t, language } = useLanguage();
-  const { user, logout } = useAuth();
+export const UserSidebar: React.FC<UserSidebarProps> = ({ collapsed, onToggle }) => {
+  const location = useLocation();
+  const { t } = useLanguage();
+  const { logout, user } = useAuth();
 
-<<<<<<< HEAD
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
-=======
   const handleLogout = async () => {
     await logout();
     window.location.href = '/';
->>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
   };
 
   return (
-    <div
+    <aside
       className={cn(
-        'fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-20 flex flex-col',
+        'fixed left-0 top-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-40',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center justify-center border-b border-border px-4">
-        {collapsed ? (
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <Milk className="h-6 w-6 text-primary-foreground" />
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <Milk className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">
-              {language === 'te' ? 'రైతు పాలు' : language === 'hi' ? 'रैथू पालू' : 'Raithu Paalu'}
-            </span>
-          </div>
+      <div className="h-16 flex items-center px-4 border-b border-border">
+        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+          <Milk className="h-5 w-5 text-primary-foreground" />
+        </div>
+        {!collapsed && (
+          <span className="ml-3 font-display text-xl font-bold text-foreground">
+            {t('appName')}
+          </span>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="space-y-1 px-3">
-          {menuItems.map((item) => (
-            <RouterNavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )
-              }
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span className="font-medium">{item.label}</span>}
-            </RouterNavLink>
-          ))}
+      {/* User info */}
+      {!collapsed && user && (
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">{user.username}</p>
+              <p className="text-sm text-muted-foreground">{user.phone || 'Customer'}</p>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Navigation */}
+      <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin">
+        <ul className="space-y-1 px-2">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path || 
+              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+            
+            return (
+              <li key={item.path}>
+                <RouterNavLink
+                  to={item.path}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200',
+                    'hover:bg-muted',
+                    isActive && 'bg-primary/10 text-primary border-l-4 border-primary -ml-0.5 pl-2.5',
+                    !isActive && 'text-muted-foreground'
+                  )}
+                >
+                  <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-primary')} />
+                  {!collapsed && <span className="font-medium">{t(item.labelKey)}</span>}
+                </RouterNavLink>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="p-4 border-t border-border space-y-2">
-        {!collapsed && (
-          <div className="mb-3 px-2">
-            <p className="text-sm font-medium text-foreground truncate">
-              {user?.name || user?.username}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user?.phone || user?.email}
-            </p>
-          </div>
-        )}
+      {/* Footer */}
+      <div className="p-2 border-t border-border">
         <Button
-          variant="outline"
-          className={cn(
-            'w-full justify-start',
-            collapsed ? 'px-0 justify-center' : ''
-          )}
+          variant="ghost"
           onClick={handleLogout}
+          className={cn(
+            'w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+            collapsed && 'justify-center'
+          )}
         >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">{t('logout')}</span>}
+          <LogOut className="h-5 w-5" />
+          {!collapsed && <span className="ml-3">{t('logout')}</span>}
         </Button>
       </div>
 
-      {/* Collapse Toggle */}
+      {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-20 w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center shadow-md hover:bg-muted transition-colors"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
       >
-        {collapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
+        {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
-    </div>
+    </aside>
   );
 };
-
-export default UserSidebar;

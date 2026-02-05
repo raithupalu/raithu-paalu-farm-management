@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import UserSidebar from '@/components/UserSidebar';
+import { UserSidebar } from '@/components/UserSidebar';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Bell } from 'lucide-react';
@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const UserLayout: React.FC = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -18,7 +18,7 @@ const UserLayout: React.FC = () => {
     <div className="min-h-screen bg-background">
       <UserSidebar 
         collapsed={sidebarCollapsed} 
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
       <div className={cn(
@@ -29,7 +29,7 @@ const UserLayout: React.FC = () => {
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
           <div>
             <h1 className="font-display text-xl font-semibold text-foreground">
-              {t('welcomeBack')}, {user?.username || user?.name || 'User'}
+              {t('welcomeBack')}, {user?.username}
             </h1>
           </div>
           

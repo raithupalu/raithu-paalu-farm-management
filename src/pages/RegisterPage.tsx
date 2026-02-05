@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Milk, Eye, EyeOff, ArrowRight, Phone, User } from 'lucide-react';
+import { Milk, Eye, EyeOff, ArrowRight, Phone, User, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -14,24 +14,44 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !phone || !password || !confirmPassword) {
+    if (!username || !email || !phone || !password || !confirmPassword) {
       toast({
         variant: "destructive",
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
         description: language === 'te' ? 'దయచేసి అన్ని ఫీల్డ్‌లను నింపండి' : 
                      language === 'hi' ? 'कृपया सभी फ़ील्ड भरें' : 'Please fill in all fields',
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        variant: "destructive",
+        title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
+        description: language === 'te' ? 'చెల్లుబాటు అయ్యే ఇమెయిల్ నమోదు చేయండి' : 
+                     language === 'hi' ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email address',
       });
       return;
     }
@@ -69,23 +89,22 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await register(username, password, phone);
+      const { error } = await register(email, password, username, phone);
       
-      if (success) {
+      if (!error) {
         toast({
           title: language === 'te' ? 'ఖాతా సృష్టించబడింది' : 
                  language === 'hi' ? 'खाता बनाया गया' : 'Account Created',
-          description: language === 'te' ? 'స్వాగతం!' : 
-                       language === 'hi' ? 'स्वागत है!' : 'Welcome!',
+          description: language === 'te' ? 'దయచేసి మీ ఇమెయిల్‌ను ధృవీకరించండి' : 
+                       language === 'hi' ? 'कृपया अपना ईमेल सत्यापित करें' : 'Please check your email to verify your account',
         });
-        navigate('/dashboard');
+        navigate('/login');
       } else {
         toast({
           variant: "destructive",
           title: language === 'te' ? 'నమోదు విఫలమైంది' : 
                  language === 'hi' ? 'पंजीकरण विफल' : 'Registration Failed',
-          description: language === 'te' ? 'దయచేసి మళ్ళీ ప్రయత్నించండి' : 
-                       language === 'hi' ? 'कृपया पुनः प्रयास करें' : 'Please try again',
+          description: error,
         });
       }
     } catch (error) {
@@ -166,6 +185,25 @@ const RegisterPage: React.FC = () => {
                                'Enter your name'}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                {language === 'te' ? 'ఇమెయిల్' : language === 'hi' ? 'ईमेल' : 'Email'}
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder={language === 'te' ? 'మీ ఇమెయిల్ నమోదు చేయండి' : 
+                               language === 'hi' ? 'अपना ईमेल दर्ज करें' : 
+                               'Enter your email'}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="h-12 pl-12"
                 />
               </div>

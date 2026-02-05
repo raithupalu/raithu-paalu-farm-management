@@ -27,7 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminSidebarProps {
   collapsed: boolean;
@@ -118,6 +118,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
   const navigate = useNavigate();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
+<<<<<<< HEAD
   const handleNavClick = (path: string, hasOptions: boolean) => {
     if (hasOptions) {
       setExpandedItem(expandedItem === path ? null : path);
@@ -133,6 +134,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
       return t(item.labelKey as any);
     }
     return item.path;
+=======
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
   };
 
   return (

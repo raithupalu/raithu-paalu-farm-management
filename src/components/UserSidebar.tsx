@@ -16,8 +16,12 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+<<<<<<< HEAD
 import { useAuth } from '@/contexts/AuthContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+=======
+import { useAuth } from '@/hooks/useAuth';
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 
 interface UserSidebarProps {
   collapsed: boolean;
@@ -38,9 +42,15 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ collapsed, onToggle }) => {
   const { t, language } = useLanguage();
   const { user, logout } = useAuth();
 
+<<<<<<< HEAD
   const handleLogout = () => {
     logout();
     window.location.href = '/login';
+=======
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
   };
 
   return (

@@ -14,6 +14,131 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      buffalo_milk_records: {
+        Row: {
+          buffalo_id: string
+          created_at: string
+          evening_liters: number | null
+          id: string
+          morning_liters: number | null
+          notes: string | null
+          record_date: string
+          recorded_by: string | null
+          total_liters: number | null
+        }
+        Insert: {
+          buffalo_id: string
+          created_at?: string
+          evening_liters?: number | null
+          id?: string
+          morning_liters?: number | null
+          notes?: string | null
+          record_date?: string
+          recorded_by?: string | null
+          total_liters?: number | null
+        }
+        Update: {
+          buffalo_id?: string
+          created_at?: string
+          evening_liters?: number | null
+          id?: string
+          morning_liters?: number | null
+          notes?: string | null
+          record_date?: string
+          recorded_by?: string | null
+          total_liters?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buffalo_milk_records_buffalo_id_fkey"
+            columns: ["buffalo_id"]
+            isOneToOne: false
+            referencedRelation: "buffaloes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buffaloes: {
+        Row: {
+          breed: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          status: string | null
+          tag_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          breed?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          status?: string | null
+          tag_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          breed?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          status?: string | null
+          tag_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -50,6 +175,119 @@ export type Database = {
           subscription_type?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      expense_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          id: string
+          receipt_url: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          receipt_url?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          receipt_url?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          current_stock: number
+          id: string
+          last_restocked: string | null
+          minimum_stock: number
+          name: string
+          notes: string | null
+          price_per_unit: number | null
+          supplier: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          current_stock?: number
+          id?: string
+          last_restocked?: string | null
+          minimum_stock?: number
+          name: string
+          notes?: string | null
+          price_per_unit?: number | null
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          current_stock?: number
+          id?: string
+          last_restocked?: string | null
+          minimum_stock?: number
+          name?: string
+          notes?: string | null
+          price_per_unit?: number | null
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -123,6 +361,59 @@ export type Database = {
           price_per_liter?: number
         }
         Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_id: string
+          delivery_date: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          payment_status: string | null
+          price_per_liter: number
+          quantity_liters: number
+          status: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          payment_status?: string | null
+          price_per_liter: number
+          quantity_liters: number
+          status?: string | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          payment_status?: string | null
+          price_per_liter?: number
+          quantity_liters?: number
+          status?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

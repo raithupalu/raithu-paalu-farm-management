@@ -165,6 +165,7 @@ export const MilkEntryForm: React.FC<MilkEntryFormProps> = ({ onSubmit, onCustom
 
     setIsSaving(true);
 
+<<<<<<< HEAD
     try {
       const saved = await addMilk({
         userId: selectedCustomerId,
@@ -173,6 +174,17 @@ export const MilkEntryForm: React.FC<MilkEntryFormProps> = ({ onSubmit, onCustom
         quantity,
         rate: pricePerLiter,
         notes
+=======
+    const { error } = await supabase
+      .from('milk_entries')
+      .insert({
+        customer_id: selectedCustomerId,
+        entry_date: format(date, 'yyyy-MM-dd'),
+        quantity_liters: quantity,
+        price_per_liter: pricePerLiter,
+        total_amount: totalAmount,
+        notes: notes || null
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
       });
 
       toast({ title: 'Success', description: 'Milk entry saved' });

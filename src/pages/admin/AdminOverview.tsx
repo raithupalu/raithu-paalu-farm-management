@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+=======
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 import {
   Milk,
   Users,
@@ -8,10 +14,12 @@ import {
   TrendingDown,
   Calendar,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+<<<<<<< HEAD
 import { useAuth } from '@/contexts/AuthContext';
 import { getMilkStats, getPaymentStats, getUsers, getBuffaloStats, getExpenseStats } from '@/services/api';
 
@@ -48,10 +56,34 @@ interface ExpenseStats {
   thisMonth: number;
   pending: number;
   byCategory: { _id: string; total: number }[];
+=======
+import { supabase } from '@/integrations/supabase/client';
+
+interface DashboardStats {
+  todaysMilk: number;
+  monthlyMilk: number;
+  totalCustomers: number;
+  activeCustomers: number;
+  totalBuffaloes: number;
+  activeBuffaloes: number;
+  pendingPayments: number;
+  pendingCustomerCount: number;
+  todaysIncome: number;
+  monthlyIncome: number;
+}
+
+interface RecentEntry {
+  id: string;
+  customer_name: string;
+  quantity: number;
+  time: string;
+  amount: number;
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 }
 
 const AdminOverview: React.FC = () => {
   const { t, language } = useLanguage();
+<<<<<<< HEAD
   const { user } = useAuth();
   const navigate = useNavigate();
   const [milkStats, setMilkStats] = useState<MilkStats | null>(null);
@@ -86,6 +118,113 @@ const AdminOverview: React.FC = () => {
 
     fetchData();
   }, []);
+=======
+  const navigate = useNavigate();
+  
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const startOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
+
+    try {
+      // Fetch all data in parallel
+      const [
+        todayMilkRes,
+        monthMilkRes,
+        customersRes,
+        buffaloesRes,
+        ordersRes,
+        recentEntriesRes
+      ] = await Promise.all([
+        // Today's milk entries
+        supabase
+          .from('milk_entries')
+          .select('quantity_liters, total_amount')
+          .eq('entry_date', today),
+        
+        // Monthly milk entries
+        supabase
+          .from('milk_entries')
+          .select('quantity_liters, total_amount')
+          .gte('entry_date', startOfMonth),
+        
+        // Customers
+        supabase
+          .from('customers')
+          .select('id, is_active'),
+        
+        // Buffaloes
+        supabase
+          .from('buffaloes')
+          .select('id, status'),
+        
+        // Orders with pending payments
+        supabase
+          .from('orders')
+          .select('total_amount, payment_status, customer_id')
+          .neq('payment_status', 'paid'),
+        
+        // Recent entries with customer info
+        supabase
+          .from('milk_entries')
+          .select('id, quantity_liters, total_amount, created_at, customers(name)')
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      // Calculate stats
+      const todaysMilk = todayMilkRes.data?.reduce((sum, e) => sum + Number(e.quantity_liters), 0) || 0;
+      const todaysIncome = todayMilkRes.data?.reduce((sum, e) => sum + Number(e.total_amount), 0) || 0;
+      const monthlyMilk = monthMilkRes.data?.reduce((sum, e) => sum + Number(e.quantity_liters), 0) || 0;
+      const monthlyIncome = monthMilkRes.data?.reduce((sum, e) => sum + Number(e.total_amount), 0) || 0;
+      
+      const totalCustomers = customersRes.data?.length || 0;
+      const activeCustomers = customersRes.data?.filter(c => c.is_active).length || 0;
+      
+      const totalBuffaloes = buffaloesRes.data?.length || 0;
+      const activeBuffaloes = buffaloesRes.data?.filter(b => b.status === 'active').length || 0;
+      
+      const pendingPayments = ordersRes.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      const pendingCustomerCount = new Set(ordersRes.data?.map(o => o.customer_id)).size || 0;
+
+      setStats({
+        todaysMilk,
+        monthlyMilk,
+        totalCustomers,
+        activeCustomers,
+        totalBuffaloes,
+        activeBuffaloes,
+        pendingPayments,
+        pendingCustomerCount,
+        todaysIncome,
+        monthlyIncome
+      });
+
+      // Format recent entries
+      const entries: RecentEntry[] = (recentEntriesRes.data || []).map(e => ({
+        id: e.id,
+        customer_name: (e.customers as any)?.name || 'Unknown',
+        quantity: Number(e.quantity_liters),
+        time: format(new Date(e.created_at), 'h:mm a'),
+        amount: Number(e.total_amount)
+      }));
+      setRecentEntries(entries);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+    
+    setIsLoading(false);
+  };
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
 
   const getColorClasses = (color: string) => {
     switch (color) {
@@ -102,6 +241,7 @@ const AdminOverview: React.FC = () => {
     }
   };
 
+<<<<<<< HEAD
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -116,10 +256,17 @@ const AdminOverview: React.FC = () => {
             </Card>
           ))}
         </div>
+=======
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
       </div>
     );
   }
 
+<<<<<<< HEAD
   const stats = [
     {
       titleKey: 'todaysMilk' as const,
@@ -168,6 +315,56 @@ const AdminOverview: React.FC = () => {
       trend: 'up' as const,
       icon: Milk,
       color: 'primary' as const,
+=======
+  const statCards = [
+    {
+      title: t('todaysMilk'),
+      value: `${stats?.todaysMilk.toFixed(1) || 0} L`,
+      change: `₹${stats?.todaysIncome.toLocaleString() || 0}`,
+      trend: 'up',
+      icon: Milk,
+      color: 'primary',
+    },
+    {
+      title: language === 'te' ? 'నెలవారీ పాలు' : language === 'hi' ? 'मासिक दूध' : 'Monthly Milk',
+      value: `${stats?.monthlyMilk.toFixed(1) || 0} L`,
+      change: `₹${stats?.monthlyIncome.toLocaleString() || 0}`,
+      trend: 'up',
+      icon: Calendar,
+      color: 'success',
+    },
+    {
+      title: t('totalCustomers'),
+      value: stats?.totalCustomers.toString() || '0',
+      change: `${stats?.activeCustomers || 0} active`,
+      trend: 'up',
+      icon: Users,
+      color: 'accent',
+    },
+    {
+      title: t('todaysIncome'),
+      value: `₹${stats?.todaysIncome.toLocaleString() || 0}`,
+      change: format(new Date(), 'dd MMM'),
+      trend: 'up',
+      icon: IndianRupee,
+      color: 'success',
+    },
+    {
+      title: t('pendingPayments'),
+      value: `₹${stats?.pendingPayments.toLocaleString() || 0}`,
+      change: `${stats?.pendingCustomerCount || 0} customers`,
+      trend: 'down',
+      icon: AlertCircle,
+      color: 'warning',
+    },
+    {
+      title: t('totalBuffaloes'),
+      value: stats?.totalBuffaloes.toString() || '0',
+      change: `${stats?.activeBuffaloes || 0} milking`,
+      trend: 'up',
+      icon: Milk,
+      color: 'primary',
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
     },
   ];
 
@@ -175,13 +372,13 @@ const AdminOverview: React.FC = () => {
     <div className="space-y-6 animate-fade-in">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <Card key={index} className="stat-card">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    {t(stat.titleKey)}
+                    {stat.title}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-1">
                     {stat.value}
@@ -217,24 +414,56 @@ const AdminOverview: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+<<<<<<< HEAD
             <Button className="w-full justify-start btn-golden" onClick={() => navigate('/admin/milk-entry')}>
               <Milk className="mr-2 h-4 w-4" />
               {t('milkEntry')}
             </Button>
             <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/customers')}>
-              <Users className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'కస్టమర్ జోడించు' : 
-               language === 'hi' ? 'ग्राहक जोड़ें' : 'Add Customer'}
+=======
+            <Button 
+              className="w-full justify-start btn-golden"
+              onClick={() => navigate('/admin/milk-entry')}
+            >
+              <Milk className="mr-2 h-4 w-4" />
+              {t('milkEntry')}
             </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/admin/customers')}
+            >
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
+              <Users className="mr-2 h-4 w-4" />
+              {language === 'te' ? 'కస్టమర్లు నిర్వహించు' : 
+               language === 'hi' ? 'ग्राहक प्रबंधित करें' : 'Manage Customers'}
+            </Button>
+<<<<<<< HEAD
             <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/expenses')}>
               <IndianRupee className="mr-2 h-4 w-4" />
               {language === 'te' ? 'ఖర్చు జోడించు' : 
                language === 'hi' ? 'खर्च जोड़ें' : 'Add Expense'}
             </Button>
             <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/admin/prices')}>
+=======
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/admin/orders')}
+            >
+              <IndianRupee className="mr-2 h-4 w-4" />
+              {language === 'te' ? 'ఆర్డర్లు చూడండి' : 
+               language === 'hi' ? 'ऑर्डर देखें' : 'View Orders'}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/admin/expenses')}
+            >
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
               <AlertCircle className="mr-2 h-4 w-4" />
-              {language === 'te' ? 'ధర నవీకరించు' : 
-               language === 'hi' ? 'कीमत अपडेट करें' : 'Update Price'}
+              {language === 'te' ? 'ఖర్చులు జోడించు' : 
+               language === 'hi' ? 'खर्च जोड़ें' : 'Add Expense'}
             </Button>
           </CardContent>
         </Card>
@@ -246,12 +475,17 @@ const AdminOverview: React.FC = () => {
               {language === 'te' ? 'ఇటీవలి కస్టమర్లు' : 
                language === 'hi' ? 'हाल के ग्राहक' : 'Recent Customers'}
             </CardTitle>
+<<<<<<< HEAD
             <Button variant="ghost" size="sm" onClick={() => navigate('/admin/customers')}>
+=======
+            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/milk-entry')}>
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
               {language === 'te' ? 'అన్నీ చూడండి' : 
                language === 'hi' ? 'सभी देखें' : 'View All'}
             </Button>
           </CardHeader>
           <CardContent>
+<<<<<<< HEAD
             <div className="space-y-4">
               {users.slice(0, 5).map((customer) => (
                 <div 
@@ -345,6 +579,40 @@ const AdminOverview: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+=======
+            {recentEntries.length > 0 ? (
+              <div className="space-y-4">
+                {recentEntries.map((entry) => (
+                  <div 
+                    key={entry.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{entry.customer_name}</p>
+                        <p className="text-sm text-muted-foreground">{entry.time}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">{entry.quantity.toFixed(2)}L</p>
+                      <p className="text-sm text-success">₹{entry.amount.toFixed(0)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Milk className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>{language === 'te' ? 'ఎంట్రీలు లేవు' : language === 'hi' ? 'कोई प्रविष्टियाँ नहीं' : 'No entries yet'}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+>>>>>>> f414d65a214657a245744ac85122315c6e4af3e1
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const AdminLayout: React.FC = () => {

@@ -15,13 +15,20 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,17 +49,16 @@ const LoginPage: React.FC = () => {
       const success = await login(username, password);
       
       if (success) {
+        // Determine redirect path based on user role
+        const redirectPath = user?.role === 'admin' ? '/admin' : '/dashboard';
+        
         toast({
           title: t('loginSuccess'),
-          description: `${t('welcomeBack')}, ${username}!`,
+          description: `${t('welcomeBack')}, ${user?.role === 'admin' ? 'admin' : user?.username}!`,
         });
         
-        // Navigate based on role (admin credentials: admin/admin123)
-        if (username === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+        // Navigate based on role
+        navigate(redirectPath);
       } else {
         toast({
           variant: "destructive",
@@ -106,7 +112,7 @@ const LoginPage: React.FC = () => {
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username">{t('username')}</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -116,6 +122,7 @@ const LoginPage: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="h-12"
+                autoComplete="username"
               />
             </div>
 

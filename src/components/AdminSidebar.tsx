@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink as RouterNavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +12,17 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  Activity,
+  DollarSign,
+  ClipboardCheck,
+  Box,
+  ChartLine,
+  List,
+  AlertTriangle,
+  Calendar,
+  Truck,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,96 +34,208 @@ interface AdminSidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, path: '/admin', labelKey: 'overview' as const },
-  { icon: Milk, path: '/admin/milk-entry', label: 'Milk Entry' },
-  { icon: Users, path: '/admin/customers', labelKey: 'customers' as const },
-  { icon: ShoppingCart, path: '/admin/orders', labelKey: 'orders' as const },
-  { icon: Milk, path: '/admin/buffaloes', labelKey: 'buffaloes' as const },
-  { icon: Receipt, path: '/admin/expenses', labelKey: 'expenses' as const },
-  { icon: Package, path: '/admin/inventory', labelKey: 'inventory' as const },
-  { icon: FileText, path: '/admin/reports', labelKey: 'reports' as const },
-  { icon: ClipboardList, path: '/admin/logs', labelKey: 'logs' as const },
+interface MenuItem {
+  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+  labelKey?: string;
+  label?: string;
+  relatedOptions?: {
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    action?: () => void;
+  }[];
+}
+
+const menuItems: MenuItem[] = [
+  { 
+    icon: LayoutDashboard, 
+    path: '/admin', 
+    labelKey: 'overview',
+    relatedOptions: []
+  },
+  { 
+    icon: Milk, 
+    path: '/admin/milk-entry', 
+    label: 'Milk Entry',
+    relatedOptions: []
+  },
+  { 
+    icon: Users, 
+    path: '/admin/customers', 
+    labelKey: 'customers',
+    relatedOptions: []
+  },
+  { 
+    icon: ShoppingCart, 
+    path: '/admin/orders', 
+    labelKey: 'orders',
+    relatedOptions: []
+  },
+  { 
+    icon: Milk, 
+    path: '/admin/buffaloes', 
+    labelKey: 'buffaloes',
+    label: 'Buffaloes',
+    relatedOptions: []
+  },
+  { 
+    icon: DollarSign, 
+    path: '/admin/prices', 
+    label: 'Prices',
+    labelKey: 'prices',
+    relatedOptions: []
+  },
+  { 
+    icon: Receipt, 
+    path: '/admin/expenses', 
+    labelKey: 'expenses',
+    relatedOptions: []
+  },
+  { 
+    icon: Package, 
+    path: '/admin/inventory', 
+    labelKey: 'inventory',
+    relatedOptions: []
+  },
+  { 
+    icon: FileText, 
+    path: '/admin/reports', 
+    labelKey: 'reports',
+    relatedOptions: []
+  },
+  { 
+    icon: ClipboardList, 
+    path: '/admin/logs', 
+    labelKey: 'logs',
+    label: 'Logs',
+    relatedOptions: []
+  },
 ];
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
-  const location = useLocation();
-  const { t } = useLanguage();
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
+  const { t, language } = useLanguage();
   const { logout } = useAuth();
+  const navigate = useNavigate();
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/';
+  const handleNavClick = (path: string, hasOptions: boolean) => {
+    if (hasOptions) {
+      setExpandedItem(expandedItem === path ? null : path);
+    } else {
+      navigate(path);
+      setExpandedItem(null);
+    }
+  };
+
+  const getLabel = (item: MenuItem) => {
+    if (item.label) return item.label;
+    if (item.labelKey && ['overview', 'customers', 'orders', 'buffaloes', 'expenses', 'inventory', 'reports', 'logs'].includes(item.labelKey)) {
+      return t(item.labelKey as any);
+    }
+    return item.path;
   };
 
   return (
-    <aside
+    <aside 
       className={cn(
-        'fixed left-0 top-0 h-screen bg-sidebar flex flex-col transition-all duration-300 z-40',
+        'fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-40 flex flex-col',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-        <div className="w-10 h-10 rounded-full bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-          <Milk className="h-5 w-5 text-sidebar-primary-foreground" />
-        </div>
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border">
         {!collapsed && (
-          <span className="ml-3 font-display text-xl font-bold text-sidebar-foreground">
-            {t('appName')}
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Milk className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-display font-semibold text-foreground">
+              {language === 'te' ? 'రైతు పాతు' : language === 'hi' ? 'रैथू पालू' : 'Raithu Paalu'}
+            </span>
+          </div>
         )}
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin">
-        <ul className="space-y-1 px-2">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path !== '/admin' && location.pathname.startsWith(item.path));
-            
-            return (
-              <li key={item.path}>
-                <RouterNavLink
-                  to={item.path}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200',
-                    'hover:bg-sidebar-accent',
-                    isActive && 'bg-sidebar-accent text-sidebar-primary border-l-4 border-sidebar-primary -ml-0.5 pl-2.5',
-                    !isActive && 'text-sidebar-foreground/80'
-                  )}
-                >
-                  <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-sidebar-primary')} />
-                  {!collapsed && <span className="font-medium">{item.label || t(item.labelKey)}</span>}
-                </RouterNavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Footer */}
-      <div className="p-2 border-t border-sidebar-border">
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          className={cn(
-            'w-full justify-start text-sidebar-foreground/80 hover:text-destructive hover:bg-destructive/10',
-            collapsed && 'justify-center'
-          )}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onToggle}
+          className={cn(collapsed && 'mx-auto')}
         >
-          <LogOut className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">{t('logout')}</span>}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
 
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-      >
-        {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-      </button>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1 px-3">
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <RouterNavLink
+                to={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(item.path, (item.relatedOptions?.length || 0) > 0);
+                }}
+                className={({ isActive }) => cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+                  'hover:bg-accent',
+                  isActive && 'bg-primary text-primary-foreground hover:bg-primary/90',
+                  collapsed && 'justify-center'
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && (
+                  <span className="font-medium">{getLabel(item)}</span>
+                )}
+                {!collapsed && item.relatedOptions && item.relatedOptions.length > 0 && (
+                  <ChevronRight className={cn(
+                    'h-4 w-4 ml-auto transition-transform',
+                    expandedItem === item.path && 'rotate-90'
+                  )} />
+                )}
+              </RouterNavLink>
+              
+              {/* Expandable options */}
+              {!collapsed && expandedItem === item.path && item.relatedOptions && (
+                <ul className="mt-1 ml-9 space-y-1">
+                  {item.relatedOptions.map((option, idx) => (
+                    <li key={idx}>
+                      <button
+                        onClick={() => {
+                          if (option.action) option.action();
+                        }}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2 rounded-lg',
+                          'hover:bg-accent transition-colors text-sm'
+                        )}
+                      >
+                        {option.icon && <option.icon className="h-4 w-4" />}
+                        <span>{option.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* User section */}
+      <div className="p-4 border-t border-border">
+        <Button 
+          variant="ghost" 
+          className={cn(
+            'w-full justify-start gap-3',
+            collapsed && 'justify-center px-0'
+          )}
+          onClick={logout}
+        >
+          <LogOut className="h-5 w-5" />
+          {!collapsed && <span>{t('logout')}</span>}
+        </Button>
+      </div>
     </aside>
   );
 };
+
+export default AdminSidebar;

@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getUsers, getMilkEntries, addMilk } from '@/services/api';
+
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Customer {
@@ -38,10 +39,15 @@ const QUICK_QUANTITIES = [
   { label: '3L', value: 3 },
 ];
 
-export const MilkEntryForm: React.FC = () => {
+interface MilkEntryFormProps {
+  onSubmit?: (data: any) => void;
+  onCustomerAdded?: () => void;
+}
+
+export const MilkEntryForm: React.FC<MilkEntryFormProps> = ({ onSubmit, onCustomerAdded }) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
-  
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
@@ -57,47 +63,69 @@ export const MilkEntryForm: React.FC = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('customers')
-        .select('id, name, phone, default_quantity')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching customers:', error);
+      try {
+        const data = await getUsers();
+        setCustomers(
+          data.map((f: any) => ({
+            id: f._id,
+            name: f.name || f.username,
+            phone: f.phone,
+            default_quantity: 1
+          }))
+        );
+      } catch {
         toast({
           variant: 'destructive',
           title: 'Error',
           description: 'Failed to load customers'
         });
-      } else {
-        setCustomers(data || []);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchCustomers();
-  }, []);
+  }, [onCustomerAdded]);
 
-  // Fetch current price
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const { data } = await supabase
-        .from('milk_prices')
-        .select('price_per_liter')
-        .order('effective_from', { ascending: false })
-        .limit(1)
-        .single();
+  // Load recent entries and monthly totals for a farmer
+  const loadRecentEntries = async (farmerId?: string) => {
+    if (!farmerId) {
+      setRecentEntries([]);
+      setMonthlyTotal({ quantity: 0, amount: 0, days: 0 });
+      return;
+    }
 
-      if (data) {
-        setPricePerLiter(Number(data.price_per_liter));
-      }
-    };
+    try {
+      const data = await getMilkEntries({ userId: farmerId });
 
-    fetchPrice();
-  }, []);
+      setRecentEntries(
+        data.map((e: any) => ({
+          id: e._id,
+          entry_date: e.date,
+          quantity_liters: e.quantity,
+          total_amount: e.totalAmount,
+          notes: e.notes || null
+        }))
+      );
 
-  // Fetch recent entries and monthly stats when customer changes
+      const totalQty = data.reduce((s: number, e: any) => s + e.quantity, 0);
+      const totalAmt = data.reduce((s: number, e: any) => s + e.totalAmount, 0);
+
+      setMonthlyTotal({
+        quantity: totalQty,
+        amount: totalAmt,
+        days: data.length
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load milk entries'
+      });
+    }
+  };
+
+  // Fetch recent entries and set default quantity when customer changes
   useEffect(() => {
     if (!selectedCustomerId) {
       setRecentEntries([]);
@@ -105,38 +133,12 @@ export const MilkEntryForm: React.FC = () => {
       return;
     }
 
-    const fetchCustomerData = async () => {
-      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    loadRecentEntries(selectedCustomerId);
 
-      // Fetch recent entries
-      const { data: entries } = await supabase
-        .from('milk_entries')
-        .select('id, entry_date, quantity_liters, total_amount, notes')
-        .eq('customer_id', selectedCustomerId)
-        .gte('entry_date', format(startOfMonth, 'yyyy-MM-dd'))
-        .lte('entry_date', format(endOfMonth, 'yyyy-MM-dd'))
-        .order('entry_date', { ascending: false });
-
-      if (entries) {
-        setRecentEntries(entries);
-        const totalQty = entries.reduce((sum, e) => sum + Number(e.quantity_liters), 0);
-        const totalAmt = entries.reduce((sum, e) => sum + Number(e.total_amount), 0);
-        setMonthlyTotal({
-          quantity: totalQty,
-          amount: totalAmt,
-          days: entries.length
-        });
-      }
-
-      // Set default quantity for selected customer
-      const customer = customers.find(c => c.id === selectedCustomerId);
-      if (customer) {
-        setQuantity(Number(customer.default_quantity) || 1);
-      }
-    };
-
-    fetchCustomerData();
+    const customer = customers.find(c => c.id === selectedCustomerId);
+    if (customer) {
+      setQuantity(Number(customer.default_quantity) || 1);
+    }
   }, [selectedCustomerId, date, customers]);
 
   const totalAmount = quantity * pricePerLiter;
@@ -146,8 +148,8 @@ export const MilkEntryForm: React.FC = () => {
       toast({
         variant: 'destructive',
         title: language === 'te' ? 'లోపం' : language === 'hi' ? 'त्रुटि' : 'Error',
-        description: language === 'te' ? 'దయచేసి కస్టమర్‌ని ఎంచుకోండి' : 
-                     language === 'hi' ? 'कृपया ग्राहक चुनें' : 'Please select a customer'
+        description: language === 'te' ? 'దయచేసి కస్టమర్‌ని ఎంచుకోండి' :
+          language === 'hi' ? 'कृपया ग्राहक चुनें' : 'Please select a customer'
       });
       return;
     }
@@ -163,60 +165,48 @@ export const MilkEntryForm: React.FC = () => {
 
     setIsSaving(true);
 
-    const { error } = await supabase
-      .from('milk_entries')
-      .upsert({
-        customer_id: selectedCustomerId,
-        entry_date: format(date, 'yyyy-MM-dd'),
-        quantity_liters: quantity,
-        price_per_liter: pricePerLiter,
-        total_amount: totalAmount,
-        notes: notes || null
-      }, {
-        onConflict: 'customer_id,entry_date'
+    try {
+      const saved = await addMilk({
+        userId: selectedCustomerId,
+        date: date.toISOString(),
+        timeOfDay: 'morning',
+        quantity,
+        rate: pricePerLiter,
+        notes
       });
 
-    if (error) {
-      console.error('Error saving entry:', error);
+      toast({ title: 'Success', description: 'Milk entry saved' });
+
+      setNotes('');
+      // Refresh recent entries for the selected customer
+      await loadRecentEntries(selectedCustomerId);
+
+      // Emit a global event so other views (user dashboard) can update instantly
+      try {
+        window.dispatchEvent(new CustomEvent('milkEntry:added', { detail: saved }));
+      } catch (e) {
+        // ignore in non-browser environments
+      }
+
+      // Call the onSubmit callback if provided
+      onSubmit?.({
+        userId: selectedCustomerId,
+        date,
+        timeOfDay: 'morning',
+        quantity,
+        rate: pricePerLiter,
+        totalAmount,
+        notes
+      });
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message
+        description: 'Failed to save milk entry'
       });
-    } else {
-      toast({
-        title: language === 'te' ? 'విజయం!' : language === 'hi' ? 'सफलता!' : 'Success!',
-        description: language === 'te' ? 'పాల ఎంట్రీ సేవ్ చేయబడింది' : 
-                     language === 'hi' ? 'दूध प्रविष्टि सहेजी गई' : 'Milk entry saved successfully'
-      });
-      
-      // Refresh entries
-      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      
-      const { data: entries } = await supabase
-        .from('milk_entries')
-        .select('id, entry_date, quantity_liters, total_amount, notes')
-        .eq('customer_id', selectedCustomerId)
-        .gte('entry_date', format(startOfMonth, 'yyyy-MM-dd'))
-        .lte('entry_date', format(endOfMonth, 'yyyy-MM-dd'))
-        .order('entry_date', { ascending: false });
-
-      if (entries) {
-        setRecentEntries(entries);
-        const totalQty = entries.reduce((sum, e) => sum + Number(e.quantity_liters), 0);
-        const totalAmt = entries.reduce((sum, e) => sum + Number(e.total_amount), 0);
-        setMonthlyTotal({
-          quantity: totalQty,
-          amount: totalAmt,
-          days: entries.length
-        });
-      }
-
-      setNotes('');
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
   };
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -238,8 +228,8 @@ export const MilkEntryForm: React.FC = () => {
             <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
               <SelectTrigger className="h-12">
                 <SelectValue placeholder={
-                  language === 'te' ? 'కస్టమర్‌ని ఎంచుకోండి...' : 
-                  language === 'hi' ? 'ग्राहक चुनें...' : 'Select customer...'
+                  language === 'te' ? 'కస్టమర్‌ని ఎంచుకోండి...' :
+                    language === 'hi' ? 'ग्राहक चुनें...' : 'Select customer...'
                 } />
               </SelectTrigger>
               <SelectContent>
@@ -332,8 +322,8 @@ export const MilkEntryForm: React.FC = () => {
             <Label>{language === 'te' ? 'గమనికలు' : language === 'hi' ? 'नोट्स' : 'Notes'}</Label>
             <Textarea
               placeholder={
-                language === 'te' ? 'ఐచ్ఛిక గమనికలు...' : 
-                language === 'hi' ? 'वैकल्पिक नोट्स...' : 'Optional notes...'
+                language === 'te' ? 'ఐచ్ఛిక గమనికలు...' :
+                  language === 'hi' ? 'वैकल्पिक नोट्स...' : 'Optional notes...'
               }
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -343,8 +333,8 @@ export const MilkEntryForm: React.FC = () => {
           </div>
 
           {/* Save Button */}
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={isSaving || !selectedCustomerId}
             className="w-full h-12 btn-golden font-semibold"
           >
@@ -399,8 +389,8 @@ export const MilkEntryForm: React.FC = () => {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm text-center py-4">
-                {language === 'te' ? 'సారాంశం చూడటానికి కస్టమర్‌ని ఎంచుకోండి' : 
-                 language === 'hi' ? 'सारांश देखने के लिए ग्राहक चुनें' : 'Select a customer to view summary'}
+                {language === 'te' ? 'సారాంశం చూడటికి కస్టమర్‌ని ఎంచుకోండి' :
+                  language === 'hi' ? 'सारांश देखने के लिए ग्राहक चुनें' : 'Select a customer to view summary'}
               </p>
             )}
           </CardContent>
@@ -417,8 +407,8 @@ export const MilkEntryForm: React.FC = () => {
             {recentEntries.length > 0 ? (
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {recentEntries.slice(0, 10).map(entry => (
-                  <div 
-                    key={entry.id} 
+                  <div
+                    key={entry.id}
                     className="flex justify-between items-center p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <div>
@@ -437,7 +427,7 @@ export const MilkEntryForm: React.FC = () => {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm text-center py-4">
-                {selectedCustomerId 
+                {selectedCustomerId
                   ? (language === 'te' ? 'ఈ నెలలో ఎంట్రీలు లేవు' : language === 'hi' ? 'इस महीने कोई प्रविष्टियां नहीं' : 'No entries this month')
                   : (language === 'te' ? 'కస్టమర్‌ని ఎంచుకోండి' : language === 'hi' ? 'ग्राहक चुनें' : 'Select a customer')
                 }
